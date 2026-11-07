@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprites · One Piece Season Sprites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="sprites-page">
+  <div class="bg" aria-hidden="true"></div>
+
+  <main id="sprites">
+    <a class="back" href="index.html">← Back</a>
+    <div class="bar">
+      <h2>Sprites</h2>
+      <input id="search" type="search" placeholder="Search sprites" aria-label="Search sprites">
+    </div>
+    <p class="note">Drop chance = the chance that a sprite you find is that one. From the game files (version 43.00) via <a href="https://royal-arena.net/sprites">Royal Arena</a>, so it can change when the game updates.</p>
+    <div id="grid" class="grid"></div>
+    <p id="empty" class="empty" hidden>No sprites match that search.</p>
+  </main>
+
+  <footer>
+    Fan page, not affiliated with Epic Games.
+  </footer>
+
+  <script src="sprites.js"></script>
+  <script>
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('empty');
+    const search = document.getElementById('search');
+
+    function render(filter = '') {
+      const q = filter.trim().toLowerCase();
+      const list = SPRITES.filter(s => [s.name, s.rarity, s.ability].join(' ').toLowerCase().includes(q));
+      grid.innerHTML = list.map(s => `
+        <article class="card ${(s.rarity || 'common').toLowerCase()}">
+          <div class="art">${s.image
+            ? `<img src="${s.image}" alt="${s.name}" loading="lazy">`
+            : `<span class="placeholder">?</span>`}</div>
+          <div class="info">
+            <h3>${s.name}</h3>
+            <span class="rarity">${s.rarity || 'Common'}</span>
+            <div class="chance">${s.chance == null
+              ? `<span class="pct">—</span><span class="odds">Not from chests</span>`
+              : `<span class="pct">${s.chance.toFixed(s.chance < 1 ? 2 : 1).replace(/\.0+$/, '')}%</span><span class="odds">1 in ${Math.round(100 / s.chance)}</span>`}</div>
+            ${s.ability ? `<p class="ability">${s.ability}</p>` : ''}
+          </div>
+        </article>`).join('');
+      empty.hidden = list.length > 0;
+    }
+
+    search.addEventListener('input', e => render(e.target.value));
+    render();
+  </script>
+</body>
+</html>

@@ -5,24 +5,55 @@ body {
   min-height: 100vh;
   font-family: Inter, system-ui, sans-serif;
   color: #fff;
-  background: #0a0614;
+  background: #030818;
 }
 
 .bg {
   position: fixed;
-  inset: 0;
+  inset: -40px;
   z-index: -1;
   background:
-    linear-gradient(180deg, rgba(10, 6, 20, 0.15) 0%, rgba(10, 6, 20, 0.55) 55%, rgba(10, 6, 20, 0.95) 100%),
-    url("images/background.jpg") center 30% / cover no-repeat;
+    linear-gradient(180deg, rgba(3, 8, 30, 0.35) 0%, rgba(3, 8, 30, 0.7) 60%, rgba(3, 8, 30, 0.97) 100%),
+    url("images/background.jpg") center 20% / cover no-repeat;
+  filter: blur(18px) saturate(1.3);
 }
 
 .hero {
   min-height: 92vh;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 0 6vw 12vh;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 4vw;
+  padding: 6vh 6vw 10vh;
+}
+
+.hero-text { display: flex; flex-direction: column; }
+
+/* Home page: one screen, no scrolling */
+body.home { height: 100vh; height: 100dvh; overflow: hidden; }
+body.home .hero { height: 100%; min-height: 0; align-items: center; }
+body.home .hero-art { max-height: 84vh; }
+
+/* Sprites page */
+body.sprites-page main { min-height: calc(100vh - 80px); padding-top: 28px; }
+.back {
+  display: inline-block;
+  margin-bottom: 18px;
+  color: #9fd0ff;
+  font-weight: 800;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 14px;
+}
+.back:hover { color: #fff; }
+
+.hero-art {
+  height: min(80vh, 842px);
+  max-width: 45vw;
+  object-fit: contain;
+  border-radius: 16px;
+  box-shadow: 0 0 60px rgba(40, 140, 255, 0.55), 0 0 0 2px rgba(120, 190, 255, 0.4);
 }
 
 .eyebrow {
@@ -41,13 +72,13 @@ h1 {
   font-size: clamp(64px, 12vw, 160px);
   line-height: 0.88;
   text-transform: uppercase;
-  text-shadow: 0 6px 0 #000, 0 0 40px rgba(170, 110, 255, 0.6);
+  text-shadow: 0 6px 0 #000, 0 0 40px rgba(40, 150, 255, 0.7);
 }
 
 .tagline {
   margin: 18px 0 28px;
   font-size: 18px;
-  color: #dcd3f5;
+  color: #cfe3ff;
   max-width: 34ch;
 }
 
@@ -69,7 +100,7 @@ h1 {
 
 main {
   padding: 40px 6vw 60px;
-  background: rgba(10, 6, 20, 0.92);
+  background: rgba(3, 8, 30, 0.92);
 }
 
 .bar {
@@ -93,12 +124,12 @@ h2 {
   width: min(320px, 100%);
   padding: 12px 16px;
   border-radius: 8px;
-  border: 2px solid #3d2a6b;
-  background: #150d26;
+  border: 2px solid #1d3d7a;
+  background: #0a1430;
   color: #fff;
   font: inherit;
 }
-#search:focus { outline: none; border-color: #a56bff; }
+#search:focus { outline: none; border-color: #3fa0ff; }
 
 .grid {
   display: grid;
@@ -111,7 +142,7 @@ h2 {
   --c2: #374151;
   border-radius: 10px;
   overflow: hidden;
-  background: #150d26;
+  background: #0a1430;
   border: 2px solid var(--c1);
   transition: transform 0.15s;
 }
@@ -145,15 +176,47 @@ h2 {
   color: var(--c1);
 }
 
-.empty { color: #b6a9d6; }
+.chance {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.chance .pct { font-size: 18px; font-weight: 800; color: #fff; }
+.chance .odds { font-size: 12px; color: #9fb4d6; }
+
+.note { margin: -8px 0 20px; font-size: 13px; color: #8fa6cc; max-width: 70ch; }
+.note a { color: #9fd0ff; }
+
+.ability {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #b9cbe8;
+}
+
+.empty { color: #a9bfe0; }
 
 footer {
   padding: 24px 6vw 40px;
-  background: rgba(10, 6, 20, 0.92);
-  color: #8d82aa;
+  background: rgba(3, 8, 30, 0.92);
+  color: #7f94b8;
   font-size: 13px;
 }
-footer a { color: #c9b6ff; }
+footer a { color: #9fd0ff; }
+
+@media (max-width: 800px) {
+  .hero { align-items: center; gap: 12px; padding: 24px 16px; min-height: 80vh; }
+  .hero-text { flex: 1 1 0; min-width: 0; }
+  .hero-art { flex: 0 0 auto; height: auto; width: 46%; max-width: 360px; }
+  h1 { font-size: clamp(34px, 11vw, 96px); line-height: 0.95; text-shadow: 0 3px 0 #000, 0 0 24px rgba(40, 150, 255, 0.7); }
+  .eyebrow { font-size: 10px; letter-spacing: 2px; }
+  .tagline { font-size: 13px; margin: 10px 0 16px; }
+  .btn { padding: 10px 16px; font-size: 12px; }
+}
 
 @media (max-width: 600px) {
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
