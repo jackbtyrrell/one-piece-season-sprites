@@ -1,6 +1,7 @@
 // Reactive background for the home page.
-// A glowing wireframe landscape that rolls like waves, tilts toward your
-// mouse or finger, bulges up wherever you point, and splashes when you click.
+// A living meadow: grass that sways in the wind and bends away from your mouse
+// or finger, blue water in the low spots, purple flowers on the hills, and
+// fireflies that drift toward you. Clicking splashes a ripple and a burst of petals.
 (function () {
   const canvas = document.getElementById('fx');
   if (!canvas) return;
@@ -63,16 +64,26 @@
     return { sx: W / 2 + X * f, sy: H * 0.5 - Y * f + H * 0.14, z: Z };
   }
 
-  // Height -> color: blue in the dips, green in the middle, purple on the peaks.
-  function color(y, alpha) {
-    const k = Math.min(Math.max((y + 0.15) / 0.6, 0), 1);
-    const stops = [[40, 90, 255], [30, 200, 255], [50, 255, 120], [150, 70, 255], [210, 90, 255]];
-    const s = k * (stops.length - 1), i = Math.min(Math.floor(s), stops.length - 2), f = s - i;
-    const c = stops[i].map((v, j) => Math.round(v + (stops[i + 1][j] - v) * f));
-    return `rgba(${c[0]},${c[1]},${c[2]},${alpha})`;
-  }
-
   const pts = new Array(COLS * ROWS);
+
+  // Each grid point gets its own random grass look so the meadow isn't too neat.
+  const seed = Array.from({ length: COLS * ROWS }, () => ({
+    lean: Math.random() * 0.6 - 0.3,
+    len: 0.7 + Math.random() * 0.6,
+    shade: Math.random(),
+    flower: Math.random() < 0.35,
+  }));
+
+  // Fireflies drift around the screen and are drawn toward the pointer.
+  const flies = Array.from({ length: 46 }, () => ({
+    x: Math.random(), y: 0.15 + Math.random() * 0.8,
+    vx: 0, vy: 0, ph: Math.random() * Math.PI * 2,
+    hue: Math.random() < 0.6 ? 'g' : (Math.random() < 0.5 ? 'b' : 'p'),
+  }));
+  const FLY = { g: [170, 255, 120], b: [90, 200, 255], p: [210, 130, 255] };
+
+  // Petals that burst out when you click.
+  const petals = [];
 
   function frame(now) {
     const t = (now - start) / 1000;
@@ -87,42 +98,134 @@
         const x = (c / (COLS - 1) - 0.5) * SPAN_X;
         const y = height(x, z, t);
         const p = project(x, y, z);
-        p.y = y;
+        p.y = y; p.x = x; p.zz = z;
         pts[r * COLS + c] = p;
       }
     }
 
-    ctx.lineWidth = 1.1;
-    ctx.globalCompositeOperation = 'lighter';
-    // draw back rows first so near lines sit on top
+    const wind = Math.sin(t * 0.6) * 0.25;          // slow gusts across the meadow
+    const pX = (ptr.ex + 1) / 2 * W;                 // pointer in pixels
+    const pY = (ptr.ey + 1) / 2 * H;
+
     for (let r = 0; r < ROWS; r++) {
-      const fade = 0.15 + 0.75 * (r / (ROWS - 1));      // far rows are fainter
+      const depth = r / (ROWS - 1);                  // 0 = far, 1 = near
+      const fade = 0.25 + 0.75 * depth;
       for (let c = 0; c < COLS; c++) {
-        const p = pts[r * COLS + c];
-        if (c < COLS - 1) line(p, pts[r * COLS + c + 1], fade);
-        if (r < ROWS - 1) line(p, pts[(r + 1) * COLS + c], fade);
+        const i = r * COLS + c, p = pts[i], sd = seed[i];
+
+        // soft mossy ground: faint lines to the next point
+        ctx.lineWidth = 1;
+        if (c < COLS - 1) ground(p, pts[i + 1], fade);
+        if (r < ROWS - 1) ground(p, pts[i + COLS], fade);
+
+        if (p.y < -0.06) {
+          // low spots are water: little blue shimmer
+          const sh = 0.5 + 0.5 * Math.sin(t * 3 + p.x * 9 + p.zz * 7);
+          ctx.strokeStyle = `rgba(80, 180, 255, ${0.35 * fade * sh})`;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(p.sx - 5 * fade, p.sy);
+          ctx.lineTo(p.sx + 5 * fade, p.sy);
+          ctx.stroke();
+          continue;
+        }
+
+        // grass blade that sways in the wind and bends away from the pointer
+        const scale = (6 + 16 * depth) * sd.len;
+        let bend = sd.lean + wind + Math.sin(t * 2.2 + p.x * 3 + p.zz * 2) * 0.22;
+        const dx = p.sx - pX, dy = p.sy - pY, d = Math.hypot(dx, dy);
+        if (d < 140) bend += (dx / (d + 1)) * (1 - d / 140) * 1.2;
+        const tipX = p.sx + Math.sin(bend) * scale;
+        const tipY = p.sy - Math.cos(bend) * scale;
+        const g = 150 + Math.round(sd.shade * 90);
+        ctx.strokeStyle = `rgba(${40 + Math.round(sd.shade * 50)}, ${g}, ${90 + Math.round(sd.shade * 40)}, ${0.75 * fade})`;
+        ctx.lineWidth = 1 + depth * 1.4;
+        ctx.beginPath();
+        ctx.moveTo(p.sx, p.sy);
+        ctx.quadraticCurveTo(p.sx + Math.sin(bend) * scale * 0.2, p.sy - scale * 0.6, tipX, tipY);
+        ctx.stroke();
+
+        // purple flowers on the hills
+        if (sd.flower && p.y > 0.1) {
+          const rr = 1.5 + depth * 2.6;
+          ctx.fillStyle = `rgba(190, 110, 255, ${0.9 * fade})`;
+          for (let k = 0; k < 5; k++) {
+            const a = k * 1.2566 + t * 0.3;
+            ctx.beginPath();
+            ctx.arc(tipX + Math.cos(a) * rr, tipY + Math.sin(a) * rr, rr * 0.75, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.fillStyle = `rgba(255, 235, 140, ${fade})`;
+          ctx.beginPath();
+          ctx.arc(tipX, tipY, rr * 0.55, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
     }
-    // glowing dots on the peaks
-    for (const p of pts) {
-      if (p.y > 0.16) {
-        ctx.fillStyle = color(p.y, 0.9);
-        ctx.beginPath();
-        ctx.arc(p.sx, p.sy, 1.6 + (p.y - 0.16) * 6, 0, Math.PI * 2);
-        ctx.fill();
+
+    // fireflies
+    ctx.globalCompositeOperation = 'lighter';
+    for (const f of flies) {
+      f.ph += 0.03;
+      f.vx += (Math.random() - 0.5) * 0.0006;
+      f.vy += (Math.random() - 0.5) * 0.0006;
+      if (ptr.active) {                              // drift toward the pointer
+        f.vx += ((ptr.ex + 1) / 2 - f.x) * 0.00012;
+        f.vy += ((ptr.ey + 1) / 2 - f.y) * 0.00012;
       }
+      f.vx *= 0.97; f.vy *= 0.97;
+      f.x += f.vx; f.y += f.vy;
+      if (f.x < -0.05) f.x = 1.05; if (f.x > 1.05) f.x = -0.05;
+      if (f.y < 0.05) f.y = 0.95;  if (f.y > 1.0) f.y = 0.1;
+      const glow = 0.5 + 0.5 * Math.sin(f.ph * 2);
+      const [cr, cg, cb] = FLY[f.hue];
+      const fx = f.x * W, fy = f.y * H;
+      const grad = ctx.createRadialGradient(fx, fy, 0, fx, fy, 14);
+      grad.addColorStop(0, `rgba(${cr},${cg},${cb},${0.9 * glow})`);
+      grad.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(fx, fy, 14, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // petals from clicks
+    for (let i = petals.length - 1; i >= 0; i--) {
+      const q = petals[i];
+      q.vy += 0.04; q.vx *= 0.99; q.x += q.vx; q.y += q.vy; q.rot += q.spin; q.life -= 0.012;
+      if (q.life <= 0) { petals.splice(i, 1); continue; }
+      ctx.save();
+      ctx.translate(q.x, q.y);
+      ctx.rotate(q.rot);
+      ctx.fillStyle = `rgba(${q.c[0]},${q.c[1]},${q.c[2]},${q.life})`;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 5, 2.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
     ctx.globalCompositeOperation = 'source-over';
 
-    if (!reduced) requestAnimationFrame(frame);
+    if (!reduced || petals.length) requestAnimationFrame(frame);
   }
 
-  function line(a, b, fade) {
-    ctx.strokeStyle = color((a.y + b.y) / 2, 0.55 * fade);
+  function ground(a, b, fade) {
+    const y = (a.y + b.y) / 2;
+    ctx.strokeStyle = y < -0.06
+      ? `rgba(60, 140, 255, ${0.28 * fade})`
+      : `rgba(70, 170, 110, ${0.22 * fade})`;
     ctx.beginPath();
     ctx.moveTo(a.sx, a.sy);
     ctx.lineTo(b.sx, b.sy);
     ctx.stroke();
+  }
+
+  function burst(x, y) {
+    const cols = [[190, 110, 255], [120, 255, 140], [90, 200, 255], [255, 235, 140]];
+    for (let i = 0; i < 26; i++) {
+      const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 4;
+      petals.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 2.5, rot: a, spin: (Math.random() - 0.5) * 0.3,
+                    life: 1, c: cols[Math.floor(Math.random() * cols.length)] });
+    }
   }
 
   function setPointer(e) {
@@ -140,6 +243,7 @@
     setPointer(e);
     const g = pointerToGround(ptr.x, ptr.y);
     ripples.push({ x: g.x, z: g.z, t0: (performance.now() - start) / 1000 });
+    burst(e.clientX, e.clientY);
     if (reduced) requestAnimationFrame(frame);
   });
   window.addEventListener('resize', () => { resize(); if (reduced) requestAnimationFrame(frame); });
