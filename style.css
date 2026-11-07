@@ -291,6 +291,116 @@ h2 {
   animation: drift 5s ease-in-out infinite alternate;
 }
 
+/* ---------- Click a card: popup with the same info, bigger ---------- */
+.grid .card { cursor: pointer; }
+.grid .card:focus-visible { outline: 3px solid #ffd95a; outline-offset: 3px; }
+
+#popup {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-family: Inter, system-ui, sans-serif;
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: visible;
+}
+#popup::backdrop { background: rgba(2, 6, 20, 0.8); backdrop-filter: blur(4px); }
+#popup[open] .card.big { animation: pop 0.25s ease-out; }
+
+.card.big { border-width: 3px; cursor: default; }
+.card.big:hover { transform: none; }
+.card.big .art img { width: 85%; height: 85%; }
+.card.big .info { padding: 16px 20px 22px; }
+.card.big h3 { font-size: 28px; }
+.card.big .rarity { font-size: 14px; }
+.card.big .chance { padding: 10px 12px; }
+.card.big .chance .pct { font-size: 26px; }
+.card.big .chance .pct.small { font-size: 16px; }
+.card.big .chance .odds { font-size: 14px; }
+.card.big .ability { font-size: 16px; }
+.card.big .vtag { font-size: 13px; padding: 4px 10px; top: 12px; left: 12px; }
+
+.close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #ffd95a;
+  background: #0a1430;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+.close:hover { background: #ffd95a; color: #1a0f00; }
+
+@keyframes pop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ---------- Dances: play in the popup, different for each rarity ---------- */
+#popup .card.big .art img { cursor: pointer; }
+#popup .card.dancing .art img { animation-iteration-count: 2; animation-timing-function: ease-in-out; animation-delay: 0s; }
+
+/* Rare: side-to-side shuffle */
+#popup .card.rare.dancing .art img      { animation-name: dance-shuffle; animation-duration: 0.9s; }
+/* Epic: hop, hop, spin */
+#popup .card.epic.dancing .art img      { animation-name: dance-spin; animation-duration: 1.2s; }
+/* Legendary: wiggle down low, then a big backflip */
+#popup .card.legendary.dancing .art img { animation-name: dance-flip; animation-duration: 1.5s; }
+/* Mythic: rocket jump, double spin, then a power slam */
+#popup .card.mythic.dancing .art img    { animation-name: dance-mythic; animation-duration: 1.8s; }
+#popup .card.mythic.dancing .art        { animation: slam-flash 1.8s ease-out 2; }
+/* Anything else (Common / Uncommon): little bounce */
+#popup .card.dancing:not(.rare):not(.epic):not(.legendary):not(.mythic) .art img { animation-name: hop; animation-duration: 0.6s; animation-iteration-count: 3; }
+
+@keyframes dance-shuffle {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  15%      { transform: translateX(-22px) rotate(-10deg) translateY(-4px); }
+  30%      { transform: translateX(-22px) rotate(-10deg) translateY(0); }
+  50%      { transform: translateX(0) rotate(0deg) translateY(-8px); }
+  65%      { transform: translateX(22px) rotate(10deg) translateY(-4px); }
+  80%      { transform: translateX(22px) rotate(10deg) translateY(0); }
+}
+
+@keyframes dance-spin {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  15%      { transform: translateY(-18px) scale(0.95, 1.05); }
+  25%      { transform: translateY(0) scale(1.08, 0.92); }
+  40%      { transform: translateY(-18px) scale(0.95, 1.05); }
+  50%      { transform: translateY(0) scale(1.08, 0.92); }
+  80%      { transform: translateY(-30px) rotate(360deg) scale(1); }
+  92%      { transform: translateY(0) rotate(360deg) scale(1.1, 0.9); }
+}
+
+@keyframes dance-flip {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  10%      { transform: translateY(10px) rotate(-12deg) scale(1.1, 0.88); }
+  20%      { transform: translateY(10px) rotate(12deg) scale(1.1, 0.88); }
+  30%      { transform: translateY(10px) rotate(-12deg) scale(1.1, 0.88); }
+  40%      { transform: translateY(14px) rotate(0deg) scale(1.15, 0.8); }
+  70%      { transform: translateY(-60px) rotate(-360deg) scale(1); }
+  85%      { transform: translateY(0) rotate(-360deg) scale(1.15, 0.85); }
+  92%      { transform: translateY(-6px) rotate(-360deg) scale(1); }
+}
+
+@keyframes dance-mythic {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); filter: drop-shadow(0 10px 8px rgba(0,0,0,.35)); }
+  12%      { transform: translateY(16px) scale(1.2, 0.75); }
+  35%      { transform: translateY(-80px) rotate(360deg) scale(1.1); filter: drop-shadow(0 0 24px #fff3b0) brightness(1.3); }
+  55%      { transform: translateY(-80px) rotate(720deg) scale(1.15); filter: drop-shadow(0 0 30px #ffd95a) brightness(1.4); }
+  70%      { transform: translateY(12px) rotate(720deg) scale(1.25, 0.7); filter: drop-shadow(0 0 40px #ffd95a) brightness(1.6); }
+  80%      { transform: translateY(-10px) rotate(720deg) scale(0.95, 1.08); }
+  90%      { transform: translateY(0) rotate(720deg) scale(1.03, 0.97); }
+}
+
+@keyframes slam-flash {
+  0%, 65%  { box-shadow: inset 0 0 0 0 rgba(255, 240, 170, 0); }
+  70%      { box-shadow: inset 0 0 80px 30px rgba(255, 240, 170, 0.9); }
+  100%     { box-shadow: inset 0 0 0 0 rgba(255, 240, 170, 0); }
+}
+
 /* ---------- Living sprites: idle float, bounce on hover ---------- */
 .art img {
   transform-origin: 50% 90%;
@@ -322,6 +432,7 @@ h2 {
   .v-cursed .art::before, .v-cursed .art::after { animation: none; }
   .v-fortune .art::after { display: none; }
   .art img, .card:hover .art img { animation: none; }
+  #popup .card.dancing .art img, #popup .card.dancing .art { animation-duration: 0.01s !important; }
 }
 
 .note { margin: 0 0 20px; font-size: 13px; color: #8fa6cc; max-width: 70ch; }

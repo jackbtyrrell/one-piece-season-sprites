@@ -28,6 +28,11 @@
     <p id="empty" class="empty" hidden>No sprites match that search.</p>
   </main>
 
+  <dialog id="popup" aria-label="Sprite details">
+    <button id="popup-close" class="close" aria-label="Close">✕</button>
+    <article id="popup-card" class="card big"></article>
+  </dialog>
+
   <footer>
     Fan page, not affiliated with Epic Games.
   </footer>
@@ -48,32 +53,74 @@
       return `<span class="pct">${fmtPct(look.chance)}</span><span class="odds">1 in ${Math.round(100 / look.chance).toLocaleString()}</span>`;
     }
 
-    function render() {
-      const q = search.value.trim().toLowerCase();
-      const cards = [];
-      for (const s of SPRITES) {
-        for (const [v, look] of Object.entries(s.looks)) {
-          if (variant !== 'all' && v !== variant) continue;
-          const label = VARIANT_INFO[v].label;
-          if (![s.name, s.rarity, s.ability, label].join(' ').toLowerCase().includes(q)) continue;
-          cards.push(`
-        <article class="card ${s.rarity.toLowerCase()} v-${v}">
+    let shown = [];
+
+    function cardHTML(s, v, look, i) {
+      const label = VARIANT_INFO[v].label;
+      return `
           <div class="art">
             ${v !== 'base' ? `<span class="vtag">${label}</span>` : ''}
-            <img src="${look.image}" alt="${s.name} (${label})" loading="lazy" style="--delay:-${(cards.length * 0.37) % 3}s">
+            <img src="${look.image}" alt="${s.name} (${label})" loading="lazy" style="--delay:-${(i * 0.37) % 3}s">
           </div>
           <div class="info">
             <h3>${s.name}</h3>
             <span class="rarity">${s.rarity}${v !== 'base' ? ` · ${label}` : ''}</span>
             <div class="chance">${chanceBox(look)}</div>
             <p class="ability">${s.ability}</p>
-          </div>
-        </article>`);
+          </div>`;
+    }
+
+    function render() {
+      const q = search.value.trim().toLowerCase();
+      shown = [];
+      for (const s of SPRITES) {
+        for (const [v, look] of Object.entries(s.looks)) {
+          if (variant !== 'all' && v !== variant) continue;
+          const label = VARIANT_INFO[v].label;
+          if (![s.name, s.rarity, s.ability, label].join(' ').toLowerCase().includes(q)) continue;
+          shown.push({ s, v, look });
         }
       }
-      grid.innerHTML = cards.join('');
-      empty.hidden = cards.length > 0;
+      grid.innerHTML = shown.map(({ s, v, look }, i) => `
+        <article class="card ${s.rarity.toLowerCase()} v-${v}" data-i="${i}" tabindex="0" role="button" aria-label="Open ${s.name} (${VARIANT_INFO[v].label})">${cardHTML(s, v, look, i)}
+        </article>`).join('');
+      empty.hidden = shown.length > 0;
     }
+
+    const popup = document.getElementById('popup');
+    const popupCard = document.getElementById('popup-card');
+
+    function openPopup(i) {
+      const { s, v, look } = shown[i];
+      popupCard.className = `card big ${s.rarity.toLowerCase()} v-${v}`;
+      popupCard.innerHTML = cardHTML(s, v, look, 0);
+      popup.showModal();
+      dance();
+    }
+
+    // Each rarity has its own dance (see "Dances" in style.css).
+    function dance() {
+      popupCard.classList.remove('dancing');
+      void popupCard.offsetWidth; // restart the animation
+      popupCard.classList.add('dancing');
+    }
+    popupCard.addEventListener('animationend', e => {
+      if (e.target.tagName === 'IMG') popupCard.classList.remove('dancing');
+    });
+    popupCard.addEventListener('click', e => {
+      if (e.target.closest('.art')) dance();
+    });
+
+    grid.addEventListener('click', e => {
+      const card = e.target.closest('.card');
+      if (card) openPopup(+card.dataset.i);
+    });
+    grid.addEventListener('keydown', e => {
+      const card = e.target.closest('.card');
+      if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openPopup(+card.dataset.i); }
+    });
+    popup.addEventListener('click', e => { if (e.target === popup) popup.close(); });
+    document.getElementById('popup-close').addEventListener('click', () => popup.close());
 
     filterBtns.forEach(b => b.addEventListener('click', () => {
       variant = b.dataset.v;
