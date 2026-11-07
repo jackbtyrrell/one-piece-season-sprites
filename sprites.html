@@ -60,7 +60,7 @@
         <article class="card ${s.rarity.toLowerCase()} v-${v}">
           <div class="art">
             ${v !== 'base' ? `<span class="vtag">${label}</span>` : ''}
-            <img src="${look.image}" alt="${s.name} (${label})" loading="lazy">
+            <img src="${look.image}" alt="${s.name} (${label})" loading="lazy" style="--delay:-${(cards.length * 0.37) % 3}s">
           </div>
           <div class="info">
             <h3>${s.name}</h3>
