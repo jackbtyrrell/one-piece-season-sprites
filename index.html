@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Piece Season Sprites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+
+  <header class="hero">
+    <p class="eyebrow">Fortnite · One Piece season</p>
+    <h1>One Piece<br>Season Sprites</h1>
+    <p class="tagline">Every sprite from the season, all in one place.</p>
+    <a class="btn" href="#sprites">View sprites</a>
+  </header>
+
+  <main id="sprites">
+    <div class="bar">
+      <h2>Sprites</h2>
+      <input id="search" type="search" placeholder="Search sprites" aria-label="Search sprites">
+    </div>
+    <div id="grid" class="grid"></div>
+    <p id="empty" class="empty" hidden>No sprites match that search.</p>
+  </main>
+
+  <footer>
+    Background photo by <a href="https://unsplash.com/@davidmoum">David Moum</a> on
+    <a href="https://unsplash.com/photos/lightning-bolts-in-dark-storm-clouds-nbqlWhOVu6k">Unsplash</a>.
+    Fan page, not affiliated with Epic Games.
+  </footer>
+
+  <script src="sprites.js"></script>
+  <script>
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('empty');
+    const search = document.getElementById('search');
+
+    function render(filter = '') {
+      const q = filter.trim().toLowerCase();
+      const list = SPRITES.filter(s => (s.name + ' ' + (s.rarity || '')).toLowerCase().includes(q));
+      grid.innerHTML = list.map(s => `
+        <article class="card ${(s.rarity || 'common').toLowerCase()}">
+          <div class="art">${s.image
+            ? `<img src="${s.image}" alt="${s.name}" loading="lazy">`
+            : `<span class="placeholder">?</span>`}</div>
+          <div class="info">
+            <h3>${s.name}</h3>
+            <span class="rarity">${s.rarity || 'Common'}</span>
+          </div>
+        </article>`).join('');
+      empty.hidden = list.length > 0;
+    }
+
+    search.addEventListener('input', e => render(e.target.value));
+    render();
+  </script>
+</body>
+</html>
