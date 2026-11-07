@@ -5,7 +5,7 @@ body {
   min-height: 100vh;
   font-family: Inter, system-ui, sans-serif;
   color: #fff;
-  background: #030818;
+  background: #1b2d5c;
 }
 
 .bg {
@@ -13,7 +13,7 @@ body {
   inset: -40px;
   z-index: -1;
   background:
-    linear-gradient(180deg, rgba(3, 8, 30, 0.35) 0%, rgba(3, 8, 30, 0.7) 60%, rgba(3, 8, 30, 0.97) 100%),
+    linear-gradient(180deg, rgba(27, 45, 92, 0.35) 0%, rgba(27, 45, 92, 0.7) 60%, rgba(27, 45, 92, 0.97) 100%),
     url("images/hero.jpg") center 20% / cover no-repeat;
   filter: blur(18px) saturate(1.3);
 }
@@ -29,16 +29,168 @@ body {
 
 .hero-text { display: flex; flex-direction: column; }
 
-/* Reactive wireframe background (home page) */
-#fx {
-  position: fixed;
+/* Home page 3D moss scene (from the Tyrrell Lab site, MIT; see CREDITS.md).
+   vendor/hero-scene.js sizes itself to #hero and lays the moss out on #stage,
+   a 1600 x 880 reference frame measured in --u. */
+:root {
+  --hdr-h: 0px;
+  --ftr-h: 0px;
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --u: min(calc(100vw / 1600), calc(100svh / 695));
+}
+@media (max-width: 900px) { :root { --u: calc(100vw / 760); } }
+
+.lab-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(60% 40% at 80% 12%, rgba(255, 255, 255, .45) 0%, rgba(255, 255, 255, 0) 70%),
+    radial-gradient(40% 18% at 20% 18%, rgba(255, 255, 255, .35) 0%, rgba(255, 255, 255, 0) 70%),
+    linear-gradient(180deg, #8fd3f4 0%, #4fb0e6 45%, #1d5fa3 100%);
+}
+.lab-hero::after {
+  content: '';
+  position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
+  background:
+    radial-gradient(72% 44% at 50% 117%, rgba(255, 238, 190, .50) 0%, rgba(255, 238, 190, .22) 42%, rgba(255, 238, 190, .05) 72%, rgba(255, 238, 190, 0) 88%),
+    linear-gradient(180deg, rgba(255, 238, 190, 0) 54%, rgba(255, 238, 190, .035) 78%, rgba(255, 238, 190, .09) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+.lab-hero .stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-left: calc(-800 * var(--u));
+  margin-top: calc(-472 * var(--u));
+  width: calc(1600 * var(--u));
+  height: calc(880 * var(--u));
   pointer-events: none;
 }
-body.home .bg { filter: blur(18px) saturate(1.3) brightness(0.55); }
+@media (max-width: 900px) {
+  .lab-hero .stage { margin-left: calc(-380 * var(--u)); width: calc(760 * var(--u)); }
+}
+#scene {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .7s var(--ease);
+}
+.is-ready #scene { opacity: 1; }
+.lab-hero .hero-text,
+.lab-hero .hero-art { position: relative; z-index: 4; pointer-events: none; }  /* let clicks reach the clouds */
+.lab-hero .btn { pointer-events: auto; }
+body.home { background: #4fb0e6; }
+
+/* Drifting clouds in the home page sky (behind the moss scene) */
+.clouds {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.drift {
+  position: absolute;
+  left: 0;
+  animation: cloud-drift linear infinite;
+  will-change: transform;
+}
+.cloud {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 40% 30%, #ffffff 0%, #f4fbff 55%, #d9eefc 100%);
+  -webkit-mask: var(--shape) center / contain no-repeat;
+  mask: var(--shape) center / contain no-repeat;
+  filter: blur(1.5px) drop-shadow(0 0 10px rgba(255, 255, 255, 0.85)) drop-shadow(0 10px 14px rgba(29, 95, 163, 0.25));
+  overflow: hidden;
+  pointer-events: auto;
+  cursor: pointer;
+}
+/* Glare: a bright streak of sunlight sweeps across each cloud (the mask keeps it inside the sprite's outline) */
+.cloud::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 1) 0%, rgba(255, 252, 220, 0.8) 12%, rgba(255, 255, 255, 0) 32%);
+  animation: cloud-sparkle 2.6s ease-in-out infinite alternate;
+  animation-delay: var(--glare-delay, 0s);
+}
+.cloud::after {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: linear-gradient(115deg,
+    rgba(255, 255, 255, 0) 38%,
+    rgba(255, 250, 215, 0.95) 47%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 250, 215, 0.95) 53%,
+    rgba(255, 255, 255, 0) 62%);
+  transform: translateX(-120%);
+  animation: cloud-glare 4.5s ease-in-out infinite;
+  animation-delay: var(--glare-delay, 0s);
+}
+/* Click a sprite cloud and it dances: a bouncy, quick-stepping groove
+   (lean left, lean right, bounce on every beat, little hop-steps), played 3 times */
+.clouds { pointer-events: none; }
+.cloud.dancing { animation: cloud-groove 0.8s linear 3; transform-origin: 50% 90%; }
+@keyframes cloud-groove {
+  0%    { transform: translate(0, 0)     rotate(0deg)   scale(1, 1); }
+  12.5% { transform: translate(-8px, -14px) rotate(-10deg) scale(0.95, 1.06); }
+  25%   { transform: translate(-12px, 0)  rotate(-6deg)  scale(1.1, 0.9); }
+  37.5% { transform: translate(-4px, -10px) rotate(4deg) scale(0.97, 1.04); }
+  50%   { transform: translate(0, 0)     rotate(0deg)   scale(1.08, 0.92); }
+  62.5% { transform: translate(8px, -14px)  rotate(10deg)  scale(0.95, 1.06); }
+  75%   { transform: translate(12px, 0)   rotate(6deg)   scale(1.1, 0.9); }
+  87.5% { transform: translate(4px, -10px)  rotate(-4deg) scale(0.97, 1.04); }
+  100%  { transform: translate(0, 0)     rotate(0deg)   scale(1, 1); }
+}
+.cloud.flash { filter: blur(1px) drop-shadow(0 0 22px #fff) drop-shadow(0 0 40px #f4c542) brightness(1.15); }
+
+.drift.c2 { --glare-delay: -0.7s; }
+.drift.c3 { --glare-delay: -1.5s; }
+.drift.c4 { --glare-delay: -2.2s; }
+.drift.c5 { --glare-delay: -3s; }
+.drift.c6 { --glare-delay: -3.6s; }
+.drift.c7 { --glare-delay: -4.1s; }
+@keyframes cloud-glare {
+  0%, 45% { transform: translateX(-120%); }
+  80%, 100% { transform: translateX(120%); }
+}
+@keyframes cloud-sparkle {
+  from { opacity: 0.35; }
+  to   { opacity: 1; }
+}
+/* top = height in the sky, width = size, duration = speed (far clouds are smaller, paler and slower) */
+.drift.c1 { top: 6%;  width: 300px; opacity: 0.95; animation-duration: 70s;  animation-delay: -10s; }
+.drift.c2 { top: 18%; width: 180px; opacity: 0.75; animation-duration: 95s;  animation-delay: -60s; }
+.drift.c3 { top: 2%;  width: 220px; opacity: 0.85; animation-duration: 85s;  animation-delay: -35s; }
+.drift.c4 { top: 28%; width: 380px; opacity: 0.9;  animation-duration: 60s;  animation-delay: -42s; }
+.drift.c5 { top: 12%; width: 140px; opacity: 0.6;  animation-duration: 120s; animation-delay: -20s; }
+.drift.c6 { top: 36%; width: 240px; opacity: 0.7;  animation-duration: 100s; animation-delay: -80s; }
+.drift.c7 { top: 22%; width: 160px; opacity: 0.65; animation-duration: 110s; animation-delay: -95s; }
+
+@keyframes cloud-drift {
+  from { transform: translateX(-420px); }
+  to   { transform: translateX(calc(100vw + 40px)); }
+}
+@media (max-width: 900px) {
+  .drift.c1, .drift.c4 { width: 200px; }
+  .drift.c2, .drift.c3, .drift.c6 { width: 130px; }
+  .drift.c5, .drift.c7 { width: 100px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drift { animation-play-state: paused; }
+  .cloud::before, .cloud::after { animation: none; }
+  .cloud.dancing { animation-duration: 0.01s; }
+}
 
 /* Home page: one screen, no scrolling */
 body.home { height: 100vh; height: 100dvh; overflow: hidden; }
@@ -46,8 +198,8 @@ body.home .hero { height: 100%; min-height: 0; align-items: center; }
 body.home .hero-art { max-height: 84vh; }
 
 /* Sprites page */
-body.sprites-page main { min-height: calc(100vh - 80px); padding-top: 28px; background: rgba(3, 8, 30, 0.4); }
-body.sprites-page footer { background: rgba(3, 8, 30, 0.7); }
+body.sprites-page main { min-height: calc(100vh - 80px); padding-top: 28px; background: rgba(27, 45, 92, 0.4); }
+body.sprites-page footer { background: rgba(27, 45, 92, 0.7); }
 
 /* Giant colorful "JACK" behind everything on the sprites page */
 .big-j {
@@ -108,7 +260,7 @@ body.sprites-page footer { background: rgba(3, 8, 30, 0.7); }
 .back {
   display: inline-block;
   margin-bottom: 18px;
-  color: #9fd0ff;
+  color: #f4c542;
   font-weight: 800;
   text-decoration: none;
   text-transform: uppercase;
@@ -122,7 +274,7 @@ body.sprites-page footer { background: rgba(3, 8, 30, 0.7); }
   max-width: 45vw;
   object-fit: contain;
   border-radius: 16px;
-  box-shadow: 0 0 60px rgba(40, 140, 255, 0.55), 0 0 0 2px rgba(120, 190, 255, 0.4);
+  box-shadow: 0 0 50px rgba(214, 40, 40, 0.55), 0 0 0 4px #f4c542;
 }
 
 .eyebrow {
@@ -130,7 +282,11 @@ body.sprites-page footer { background: rgba(3, 8, 30, 0.7); }
   font-weight: 800;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: #ffd95a;
+  color: #d62828;
+  background: #fff4d6;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 4px;
   font-size: 14px;
 }
 
@@ -141,21 +297,21 @@ h1 {
   font-size: clamp(64px, 12vw, 160px);
   line-height: 0.88;
   text-transform: uppercase;
-  text-shadow: 0 6px 0 #000, 0 0 40px rgba(40, 150, 255, 0.7);
+  text-shadow: 0 6px 0 #8e1219, 0 10px 24px rgba(0, 0, 0, 0.45);
 }
 
 .tagline {
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 2px #000;
   margin: 18px 0 28px;
   font-size: 18px;
-  color: #cfe3ff;
+  color: #fff4d6;
   max-width: 34ch;
 }
 
 .btn {
   align-self: flex-start;
   padding: 14px 28px;
-  background: #ffd95a;
+  background: #f4c542;
   color: #1a0f00;
   font-weight: 800;
   text-transform: uppercase;
@@ -163,14 +319,14 @@ h1 {
   text-decoration: none;
   border-radius: 6px;
   transform: skewX(-8deg);
-  box-shadow: 0 6px 0 #a87b00;
+  box-shadow: 0 6px 0 #8e1219;
   transition: transform 0.15s, box-shadow 0.15s;
 }
-.btn:hover { transform: skewX(-8deg) translateY(2px); box-shadow: 0 4px 0 #a87b00; }
+.btn:hover { transform: skewX(-8deg) translateY(2px); box-shadow: 0 4px 0 #8e1219; }
 
 main {
   padding: 40px 6vw 60px;
-  background: rgba(3, 8, 30, 0.92);
+  background: rgba(27, 45, 92, 0.92);
 }
 
 .bar {
@@ -198,7 +354,7 @@ h2 {
   border-radius: 10px;
   border: 3px solid transparent;
   background:
-    linear-gradient(#0a1430, #0a1430) padding-box,
+    linear-gradient(#1a2b58, #1a2b58) padding-box,
     var(--rainbow) border-box;
   background-size: 100% 100%, 300% 100%;
   color: #fff;
@@ -241,7 +397,7 @@ h2 {
   --c2: #374151;
   border-radius: 10px;
   overflow: hidden;
-  background: #0a1430;
+  background: #1a2b58;
   border: 2px solid var(--c1);
   transition: transform 0.15s;
 }
@@ -285,15 +441,15 @@ h2 {
   background: rgba(255, 255, 255, 0.06);
 }
 .chance .pct { font-size: 18px; font-weight: 800; color: #fff; }
-.chance .odds { font-size: 12px; color: #9fb4d6; }
+.chance .odds { font-size: 12px; color: #c9d6f0; }
 
 .filters { display: flex; flex-wrap: wrap; gap: 8px; margin: -8px 0 16px; }
 .filters button {
   padding: 8px 16px;
   border-radius: 999px;
-  border: 2px solid #1d3d7a;
-  background: #0a1430;
-  color: #cfe3ff;
+  border: 2px solid #3b56a6;
+  background: #1a2b58;
+  color: #fff4d6;
   font: inherit;
   font-weight: 800;
   font-size: 13px;
@@ -301,9 +457,9 @@ h2 {
   letter-spacing: 1px;
   cursor: pointer;
 }
-.filters button:hover { border-color: #3fa0ff; }
+.filters button:hover { border-color: #d62828; }
 .filters button {
-  --glow: #ffd95a;
+  --glow: #f4c542;
   transition: background-color 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.15s;
 }
 .filters button.on {
@@ -407,7 +563,7 @@ h2 {
 
 /* ---------- Click a card: popup with the same info, bigger ---------- */
 .grid .card { cursor: pointer; }
-.grid .card:focus-visible { outline: 3px solid #ffd95a; outline-offset: 3px; }
+.grid .card:focus-visible { outline: 3px solid #f4c542; outline-offset: 3px; }
 
 #popup {
   padding: 0;
@@ -443,13 +599,13 @@ h2 {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 2px solid #ffd95a;
-  background: #0a1430;
+  border: 2px solid #f4c542;
+  background: #1a2b58;
   color: #fff;
   font-size: 18px;
   cursor: pointer;
 }
-.close:hover { background: #ffd95a; color: #1a0f00; }
+.close:hover { background: #f4c542; color: #1a0f00; }
 
 @keyframes pop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
@@ -503,8 +659,8 @@ h2 {
   0%, 100% { transform: translateY(0) rotate(0deg) scale(1); filter: drop-shadow(0 10px 8px rgba(0,0,0,.35)); }
   12%      { transform: translateY(16px) scale(1.2, 0.75); }
   35%      { transform: translateY(-80px) rotate(360deg) scale(1.1); filter: drop-shadow(0 0 24px #fff3b0) brightness(1.3); }
-  55%      { transform: translateY(-80px) rotate(720deg) scale(1.15); filter: drop-shadow(0 0 30px #ffd95a) brightness(1.4); }
-  70%      { transform: translateY(12px) rotate(720deg) scale(1.25, 0.7); filter: drop-shadow(0 0 40px #ffd95a) brightness(1.6); }
+  55%      { transform: translateY(-80px) rotate(720deg) scale(1.15); filter: drop-shadow(0 0 30px #f4c542) brightness(1.4); }
+  70%      { transform: translateY(12px) rotate(720deg) scale(1.25, 0.7); filter: drop-shadow(0 0 40px #f4c542) brightness(1.6); }
   80%      { transform: translateY(-10px) rotate(720deg) scale(0.95, 1.08); }
   90%      { transform: translateY(0) rotate(720deg) scale(1.03, 0.97); }
 }
@@ -549,31 +705,31 @@ h2 {
   #popup .card.dancing .art img, #popup .card.dancing .art { animation-duration: 0.01s !important; }
 }
 
-.note { margin: 0 0 20px; font-size: 13px; color: #8fa6cc; max-width: 70ch; }
-.note a { color: #9fd0ff; }
+.note { margin: 0 0 20px; font-size: 13px; color: #c9d6f0; max-width: 70ch; }
+.note a { color: #f4c542; }
 
 .ability {
   margin: 8px 0 0;
   font-size: 13px;
   line-height: 1.4;
-  color: #b9cbe8;
+  color: #dfe7f7;
 }
 
-.empty { color: #a9bfe0; }
+.empty { color: #c9d6f0; }
 
 footer {
   padding: 24px 6vw 40px;
-  background: rgba(3, 8, 30, 0.92);
-  color: #7f94b8;
+  background: rgba(27, 45, 92, 0.92);
+  color: #c9d6f0;
   font-size: 13px;
 }
-footer a { color: #9fd0ff; }
+footer a { color: #f4c542; }
 
 @media (max-width: 800px) {
   .hero { align-items: center; gap: 12px; padding: 24px 16px; min-height: 80vh; }
   .hero-text { flex: 1 1 0; min-width: 0; }
   .hero-art { flex: 0 0 auto; height: auto; width: 46%; max-width: 360px; }
-  h1 { font-size: clamp(34px, 11vw, 96px); line-height: 0.95; text-shadow: 0 3px 0 #000, 0 0 24px rgba(40, 150, 255, 0.7); }
+  h1 { font-size: clamp(34px, 11vw, 96px); line-height: 0.95; text-shadow: 0 3px 0 #8e1219, 0 6px 14px rgba(0, 0, 0, 0.45); }
   .eyebrow { font-size: 10px; letter-spacing: 2px; }
   .tagline { font-size: 13px; margin: 10px 0 16px; }
   .btn { padding: 10px 16px; font-size: 12px; }
