@@ -63,10 +63,10 @@
     return { sx: W / 2 + X * f, sy: H * 0.5 - Y * f + H * 0.14, z: Z };
   }
 
-  // Height -> color: deep blue, cyan, purple, gold at the peaks.
+  // Height -> color: blue in the dips, green in the middle, purple on the peaks.
   function color(y, alpha) {
     const k = Math.min(Math.max((y + 0.15) / 0.6, 0), 1);
-    const stops = [[30, 90, 255], [24, 224, 255], [196, 77, 255], [255, 217, 90]];
+    const stops = [[40, 90, 255], [30, 200, 255], [50, 255, 120], [150, 70, 255], [210, 90, 255]];
     const s = k * (stops.length - 1), i = Math.min(Math.floor(s), stops.length - 2), f = s - i;
     const c = stops[i].map((v, j) => Math.round(v + (stops[i + 1][j] - v) * f));
     return `rgba(${c[0]},${c[1]},${c[2]},${alpha})`;
