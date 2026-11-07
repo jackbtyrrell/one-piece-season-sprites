@@ -14,7 +14,7 @@ body {
   z-index: -1;
   background:
     linear-gradient(180deg, rgba(3, 8, 30, 0.35) 0%, rgba(3, 8, 30, 0.7) 60%, rgba(3, 8, 30, 0.97) 100%),
-    url("images/background.jpg") center 20% / cover no-repeat;
+    url("images/hero.jpg") center 20% / cover no-repeat;
   filter: blur(18px) saturate(1.3);
 }
 
