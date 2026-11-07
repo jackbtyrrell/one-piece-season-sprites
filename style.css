@@ -88,11 +88,30 @@ body {
 .lab-hero .btn { pointer-events: auto; }
 body.home { background: #4fb0e6; }
 
+/* Shipwreck photo on the horizon, behind the clouds and the moss.
+   Its own sky fades out at the top so it blends into the page's sky. */
+.wreck {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 78%;
+  z-index: 1;
+  pointer-events: none;
+  background: url("images/shipwreck-anime.jpg") 58% 62% / cover no-repeat;
+  -webkit-mask: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.35) 22%, #000 48%);
+  mask: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.35) 22%, #000 48%);
+  filter: saturate(1.05) contrast(1.05);
+}
+@media (max-width: 900px) {
+  .wreck { height: 62%; background-position: 50% 70%; }
+}
+
 /* Drifting clouds in the home page sky (behind the moss scene) */
 .clouds {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 2;
   pointer-events: none;
   overflow: hidden;
 }

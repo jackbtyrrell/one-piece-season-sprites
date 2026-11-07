@@ -11,6 +11,12 @@ License. Only the code is used here; none of the lab's photos, figures or text.
 >
 > Copyright (c) 2026 Meng To
 
+## Shipwreck photo
+
+`images/shipwreck-anime.jpg` is "Ruined ship on shore" by Aneta Hartmannová
+(<https://unsplash.com/photos/ruined-ship-on-shore--LymsoxDbic>), used under the
+Unsplash License and redrawn into a cel-shaded anime style.
+
 ## three.js
 
 `vendor/three.min.js` is an unmodified three.js r149 build.
