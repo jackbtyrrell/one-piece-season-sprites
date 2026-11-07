@@ -178,16 +178,45 @@ h2 {
   letter-spacing: 1px;
 }
 
+/* Rainbow search box: moving rainbow border, glow and rainbow placeholder text */
 #search {
+  --rainbow: linear-gradient(90deg, #ff3b3b, #ff9f1a, #ffe14d, #4dff6a, #18e0ff, #4d6bff, #c44dff, #ff3bb0, #ff3b3b);
   width: min(320px, 100%);
   padding: 12px 16px;
-  border-radius: 8px;
-  border: 2px solid #1d3d7a;
-  background: #0a1430;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background:
+    linear-gradient(#0a1430, #0a1430) padding-box,
+    var(--rainbow) border-box;
+  background-size: 100% 100%, 300% 100%;
   color: #fff;
   font: inherit;
+  font-weight: 600;
+  caret-color: #ffe14d;
+  box-shadow: 0 0 14px rgba(255, 80, 200, 0.45), 0 0 28px rgba(24, 224, 255, 0.3);
+  animation: rainbow-slide 4s linear infinite, rainbow-glow 6s linear infinite;
 }
-#search:focus { outline: none; border-color: #3fa0ff; }
+#search::placeholder {
+  background: var(--rainbow);
+  background-size: 120% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+  animation: rainbow-slide 4s linear infinite;
+}
+#search:focus { outline: none; box-shadow: 0 0 20px rgba(255, 225, 77, 0.7), 0 0 40px rgba(196, 77, 255, 0.5); }
+
+@keyframes rainbow-slide {
+  from { background-position: 0 0, 0% 0; }
+  to   { background-position: 0 0, 300% 0; }
+}
+@keyframes rainbow-glow {
+  from { filter: hue-rotate(0deg); }
+  to   { filter: hue-rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) { #search, #search::placeholder { animation: none; } }
 
 .grid {
   display: grid;
@@ -261,7 +290,22 @@ h2 {
   cursor: pointer;
 }
 .filters button:hover { border-color: #3fa0ff; }
-.filters button.on { background: #ffd95a; border-color: #ffd95a; color: #1a0f00; }
+.filters button {
+  --glow: #ffd95a;
+  transition: background-color 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.15s;
+}
+.filters button.on {
+  background: var(--glow);
+  border-color: var(--glow);
+  color: #120a1c;
+  box-shadow: 0 0 12px var(--glow), 0 0 28px var(--glow), 0 0 48px color-mix(in srgb, var(--glow) 50%, transparent);
+}
+.filters button.pop { animation: filter-pop 0.35s ease-out; }
+@keyframes filter-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
 
 .art { position: relative; }
 .vtag {

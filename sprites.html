@@ -123,9 +123,22 @@
     popup.addEventListener('click', e => { if (e.target === popup) popup.close(); });
     document.getElementById('popup-close').addEventListener('click', () => popup.close());
 
+    // Each click gives the button a new glow color (never the same one twice in a row).
+    const GLOWS = ['#ff3b3b', '#ff9f1a', '#ffe14d', '#4dff6a', '#18e0ff', '#4d6bff', '#c44dff', '#ff3bb0', '#00ffc8', '#ff6a3d'];
+    let lastGlow = '';
+    function newGlow() {
+      let c;
+      do { c = GLOWS[Math.floor(Math.random() * GLOWS.length)]; } while (c === lastGlow);
+      return (lastGlow = c);
+    }
+
     filterBtns.forEach(b => b.addEventListener('click', () => {
       variant = b.dataset.v;
       filterBtns.forEach(x => x.classList.toggle('on', x === b));
+      b.style.setProperty('--glow', newGlow());
+      b.classList.remove('pop');
+      void b.offsetWidth;
+      b.classList.add('pop');
       render();
     }));
     search.addEventListener('input', render);
