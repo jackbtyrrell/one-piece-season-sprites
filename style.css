@@ -35,7 +35,39 @@ body.home .hero { height: 100%; min-height: 0; align-items: center; }
 body.home .hero-art { max-height: 84vh; }
 
 /* Sprites page */
-body.sprites-page main { min-height: calc(100vh - 80px); padding-top: 28px; }
+body.sprites-page main { min-height: calc(100vh - 80px); padding-top: 28px; background: rgba(3, 8, 30, 0.4); }
+body.sprites-page footer { background: rgba(3, 8, 30, 0.7); }
+
+/* Giant "J" behind everything on the sprites page */
+.big-j {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  overflow: hidden;
+}
+.big-j span {
+  font-family: "Luckiest Guy", "Bebas Neue", Impact, sans-serif;
+  font-size: min(95vh, 110vw);
+  line-height: 1;
+  padding-top: 0.12em;
+  transform: rotate(-8deg) skewX(-6deg);
+  background: linear-gradient(160deg, #fff6b0 0%, #ffd95a 30%, #ff9f1a 55%, #3fa0ff 75%, #1e3a8a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 6px rgba(255, 255, 255, 0.85);
+  opacity: 0.6;
+  filter: drop-shadow(0 0 30px rgba(63, 160, 255, 0.8)) drop-shadow(14px 18px 0 rgba(0, 0, 0, 0.6));
+  animation: j-pulse 4s ease-in-out infinite;
+}
+@keyframes j-pulse {
+  0%, 100% { transform: rotate(-8deg) skewX(-6deg) scale(1); opacity: 0.55; }
+  50%      { transform: rotate(-6deg) skewX(-6deg) scale(1.04); opacity: 0.75; }
+}
+@media (prefers-reduced-motion: reduce) { .big-j span { animation: none; } }
 .back {
   display: inline-block;
   margin-bottom: 18px;
