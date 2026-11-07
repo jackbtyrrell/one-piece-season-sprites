@@ -17,7 +17,13 @@
       <h2>Sprites</h2>
       <input id="search" type="search" placeholder="Search sprites" aria-label="Search sprites">
     </div>
-    <p class="note">Drop chance = the chance that a sprite you find is that one. From the game files (version 43.00) via <a href="https://royal-arena.net/sprites">Royal Arena</a>, so it can change when the game updates.</p>
+    <div class="filters" role="group" aria-label="Show variants">
+      <button data-v="all" class="on">All</button>
+      <button data-v="base">Base</button>
+      <button data-v="fortune">Fortune</button>
+      <button data-v="cursed">Cursed</button>
+    </div>
+    <p class="note">Drop chance = the chance that a sprite you find is that sprite in that look. From the game files (version 43.00) via <a href="https://royal-arena.net/sprites">Royal Arena</a>, so it can change when the game updates. <b>Fortune</b> reveals nearby chests. <b>Cursed</b> gives better odds of rare variants, but water hurts you.</p>
     <div id="grid" class="grid"></div>
     <p id="empty" class="empty" hidden>No sprites match that search.</p>
   </main>
@@ -31,28 +37,50 @@
     const grid = document.getElementById('grid');
     const empty = document.getElementById('empty');
     const search = document.getElementById('search');
+    const filterBtns = [...document.querySelectorAll('.filters button')];
+    let variant = 'all';
 
-    function render(filter = '') {
-      const q = filter.trim().toLowerCase();
-      const list = SPRITES.filter(s => [s.name, s.rarity, s.ability].join(' ').toLowerCase().includes(q));
-      grid.innerHTML = list.map(s => `
-        <article class="card ${(s.rarity || 'common').toLowerCase()}">
-          <div class="art">${s.image
-            ? `<img src="${s.image}" alt="${s.name}" loading="lazy">`
-            : `<span class="placeholder">?</span>`}</div>
-          <div class="info">
-            <h3>${s.name}</h3>
-            <span class="rarity">${s.rarity || 'Common'}</span>
-            <div class="chance">${s.chance == null
-              ? `<span class="pct">—</span><span class="odds">Not from chests</span>`
-              : `<span class="pct">${s.chance.toFixed(s.chance < 1 ? 2 : 1).replace(/\.0+$/, '')}%</span><span class="odds">1 in ${Math.round(100 / s.chance)}</span>`}</div>
-            ${s.ability ? `<p class="ability">${s.ability}</p>` : ''}
-          </div>
-        </article>`).join('');
-      empty.hidden = list.length > 0;
+    const fmtPct = c => (c >= 1 ? c.toFixed(1).replace(/\.0$/, '') : String(Number(c.toFixed(3)))) + '%';
+
+    function chanceBox(look) {
+      if (look.note) return `<span class="pct small">${look.note}</span>`;
+      if (look.chance == null) return `<span class="pct">—</span><span class="odds">Not from chests</span>`;
+      return `<span class="pct">${fmtPct(look.chance)}</span><span class="odds">1 in ${Math.round(100 / look.chance).toLocaleString()}</span>`;
     }
 
-    search.addEventListener('input', e => render(e.target.value));
+    function render() {
+      const q = search.value.trim().toLowerCase();
+      const cards = [];
+      for (const s of SPRITES) {
+        for (const [v, look] of Object.entries(s.looks)) {
+          if (variant !== 'all' && v !== variant) continue;
+          const label = VARIANT_INFO[v].label;
+          if (![s.name, s.rarity, s.ability, label].join(' ').toLowerCase().includes(q)) continue;
+          cards.push(`
+        <article class="card ${s.rarity.toLowerCase()} v-${v}">
+          <div class="art">
+            ${v !== 'base' ? `<span class="vtag">${label}</span>` : ''}
+            <img src="${look.image}" alt="${s.name} (${label})" loading="lazy">
+          </div>
+          <div class="info">
+            <h3>${s.name}</h3>
+            <span class="rarity">${s.rarity}${v !== 'base' ? ` · ${label}` : ''}</span>
+            <div class="chance">${chanceBox(look)}</div>
+            <p class="ability">${s.ability}</p>
+          </div>
+        </article>`);
+        }
+      }
+      grid.innerHTML = cards.join('');
+      empty.hidden = cards.length > 0;
+    }
+
+    filterBtns.forEach(b => b.addEventListener('click', () => {
+      variant = b.dataset.v;
+      filterBtns.forEach(x => x.classList.toggle('on', x === b));
+      render();
+    }));
+    search.addEventListener('input', render);
     render();
   </script>
 </body>
